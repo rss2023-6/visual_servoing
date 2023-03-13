@@ -34,6 +34,44 @@ def cd_color_segmentation(img, template):
 				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
 	"""
 	########## YOUR CODE STARTS HERE ##########
+	img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+	light_orange = (0, 210, 170) #H,S,V
+	dark_orange = (50, 255, 255) #H,S,V
+	mask = cv2.inRange(img_hsv, light_orange, dark_orange)
+	masked_img = cv2.bitwise_and(img_hsv, img_hsv, mask=mask)
+
+	#bounding box
+	h, s, v = cv2.split(masked_img)
+	ret, th1 = cv2.threshold(h,180,255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+	kernel = np.ones((1,1), dtype = "uint8")/9
+	bilateral = cv2.bilateralFilter(th1, 9 , 75, 75)
+	erosion = cv2.erode(bilateral, kernel, iterations = 1)
+
+
+	#finding the area of all connected white pixels in the image
+	pixel_components, output, stats, centroids =cv2.connectedComponentsWithStats(erosion, connectivity=8)
+	area = stats[1:, -1]; pixel_components = pixel_components - 1
+	min_size = 1000
+
+	img2 = np.zeros((output.shape))
+	#Removing the small white pixel area below the minimum size
+	for i in range(0, pixel_components):
+		if area[i] >= min_size:
+			img2[output == i + 1] = 255
+
+	img3 = img2.astype(np.uint8) 
+
+	# find contours and bounding rectangle in the thresholded image
+	cnts, _ = cv2.findContours(img3.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	rect = cv2.boundingRect(cnts[0])
+	x,y,w,h = rect #(x,y) be the top-left coordinate of the rectangle and (w,h) be its width and height.
+
+	#visualize
+	img_final = img.copy()
+	#img_final = cv2.drawContours(img_final,cnts[0],0,(0,255,255),2)
+	img_final = cv2.rectangle(img_final, (x,y),(x+w,y+h),(0,255,0),2)
+	image_print(img_final)
 
 	bounding_box = ((0,0),(0,0))
 
