@@ -52,7 +52,7 @@ def cd_color_segmentation(img, template):
 	#finding the area of all connected white pixels in the image
 	pixel_components, output, stats, centroids =cv2.connectedComponentsWithStats(erosion, connectivity=8)
 	area = stats[1:, -1]; pixel_components = pixel_components - 1
-	min_size = 1000
+	min_size = 200 #1000
 
 	img2 = np.zeros((output.shape))
 	#Removing the small white pixel area below the minimum size
@@ -69,10 +69,10 @@ def cd_color_segmentation(img, template):
 		x,y,w,h = rect #(x,y) be the top-left coordinate of the rectangle and (w,h) be its width and height.
 
 		#visualize
-		img_final = img.copy()
-		#img_final = cv2.drawContours(img_final,cnts[0],0,(0,255,255),2)
-		img_final = cv2.rectangle(img_final, (x,y),(x+w,y+h),(0,255,0),2)
-		image_print(img_final)
+		# img_final = img.copy()
+		# #img_final = cv2.drawContours(img_final,cnts[0],0,(0,255,255),2)
+		# img_final = cv2.rectangle(img_final, (x,y),(x+w,y+h),(0,255,0),2)
+		# image_print(img_final)
 
 	except:
 		x,y,w,h = 0,0,0,0
