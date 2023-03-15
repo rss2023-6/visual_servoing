@@ -63,17 +63,22 @@ def cd_color_segmentation(img, template):
 	img3 = img2.astype(np.uint8) 
 
 	# find contours and bounding rectangle in the thresholded image
-	cnts, _ = cv2.findContours(img3.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	rect = cv2.boundingRect(cnts[0])
-	x,y,w,h = rect #(x,y) be the top-left coordinate of the rectangle and (w,h) be its width and height.
+	cnts, hierachy = cv2.findContours(img3.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[-2:]
+	try: 
+		rect = cv2.boundingRect(cnts[0])
+		x,y,w,h = rect #(x,y) be the top-left coordinate of the rectangle and (w,h) be its width and height.
 
-	#visualize
-	img_final = img.copy()
-	#img_final = cv2.drawContours(img_final,cnts[0],0,(0,255,255),2)
-	img_final = cv2.rectangle(img_final, (x,y),(x+w,y+h),(0,255,0),2)
-	image_print(img_final)
+		#visualize
+		img_final = img.copy()
+		#img_final = cv2.drawContours(img_final,cnts[0],0,(0,255,255),2)
+		img_final = cv2.rectangle(img_final, (x,y),(x+w,y+h),(0,255,0),2)
+		image_print(img_final)
+
+	except:
+		x,y,w,h = 0,0,0,0
 
 	bounding_box = ((x,y),(x+w,y+h))
+
 
 	########### YOUR CODE ENDS HERE ###########
 
