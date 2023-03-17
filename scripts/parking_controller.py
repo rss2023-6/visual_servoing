@@ -16,6 +16,7 @@ class ParkingController():
     history_para = 0
     ierr_para = 0
     turn_angle = 0.33/np.tan(0.34) #0.33/np.tan(0.34)
+    meters_from_feet = 0.3048 
 
     def __init__(self):
         rospy.Subscriber("/relative_cone", ConeLocation,
@@ -64,7 +65,7 @@ class ParkingController():
         self.angle = np.arctan([self.relative_y, self.relative_x])[0]
         self.distance = np.sqrt(self.relative_x**2+self.relative_y**2)
 
-        if self.distance <1.5 + self.buffer:
+        if self.distance <(1.5 + self.buffer)*self.meters_from_feet: #drive backwards if too close 
             drive_cmd.drive.steering_angle = -self.angle_correct(self.angle)
             drive_cmd.drive.speed = -1
             self.buffer = 0.5
@@ -76,7 +77,7 @@ class ParkingController():
             elif abs(self.angle) > 0.1: #adjust angle 
                 drive_cmd.drive.steering_angle =  self.angle_correct(self.angle)
                 drive_cmd.drive.speed = 1
-            elif self.distance > 2.0: #move forward part
+            elif self.distance > (2.0)*self.meters_from_feet: #move forward part
                 drive_cmd.drive.steering_angle = 0 
                 drive_cmd.drive.speed = 1
             else:

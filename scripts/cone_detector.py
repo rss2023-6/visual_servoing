@@ -49,6 +49,14 @@ class ConeDetector():
         debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
         self.debug_pub.publish(debug_msg)
 
+        bbox = cd_color_segmentation(image,"") #((x,y),(x+w,y+h))
+
+        center_pix = ConeLocationPixel()
+        center_pix.u = (bbox[0][0]+ bbox[1][0])/2
+        center_pix.v = (bbox[0][1]+ bbox[1][1])/2
+
+        self.cone_pub.publish(center_pix)
+
 
 if __name__ == '__main__':
     try:
