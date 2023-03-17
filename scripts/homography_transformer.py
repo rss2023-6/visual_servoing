@@ -26,7 +26,7 @@ from geometry_msgs.msg import Point
 PTS_IMAGE_PLANE = [[303, 367],
                    [319, 262],
                    [325, 238],
-                   [-547, 361],
+                   [547, 361],
                    [482, 259],
                    [152, 265],] # dummy points
 ######################################################
@@ -36,16 +36,15 @@ PTS_IMAGE_PLANE = [[303, 367],
 
 ######################################################
 ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_GROUND_PLANE = [[10, 0],
-                    [20, 0],
-                    [25, 0],
-                    [10, -8],
-                    [20, -10],
-                    [20, 10],] # dummy points
+PTS_GROUND_PLANE = [[10.0, 0.0],
+                    [20.0, 0.0],
+                    [25.0, 0.0],
+                    [10.0, -8.0],
+                    [20.0, -10.0],
+                    [20.0, 10.0],] # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254
-
 
 class HomographyTransformer:
     def __init__(self):
