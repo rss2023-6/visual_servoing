@@ -34,8 +34,23 @@ def cd_color_segmentation(img, template):
 				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
 	"""
 	########## YOUR CODE STARTS HERE ##########
-	img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+	# #line following box 
+	# start_point1 = (0, 0) #top rectangle 
+	# end_point1 = (672, 200) #top rectangle: just edit y_coordinate for line_follower
+
+	# thickness = -1 
+	# color = (0, 0, 0) # Black color in BGR
+	# img_line= cv2.rectangle(img, start_point1, end_point1, color, thickness)
+
+	# start_point2 = (0, 300) #bottom rectangle: just edit y_coordinate for line follower
+	# end_point2 = (672, 376) #bottom rectangle 
+	# img_line= cv2.rectangle(img_line, start_point2, end_point2, color, thickness)
+	
+	#convert to hsv
+	img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) #for line following, convert img to img_line
+
+	#filter oranges
 	light_orange = (0, 210, 170) #H,S,V
 	dark_orange = (50, 255, 255) #H,S,V
 	mask = cv2.inRange(img_hsv, light_orange, dark_orange)
