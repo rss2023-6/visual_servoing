@@ -53,7 +53,7 @@ class ConeDetector():
 
         center_pix = ConeLocationPixel()
         center_pix.u = (bbox[0][0]+ bbox[1][0])/2
-        center_pix.v = (bbox[0][1]+ bbox[1][1])/2
+        center_pix.v = np.max(bbox[0][1], bbox[1][1]) #get bottom one 
 
         self.cone_pub.publish(center_pix)
 
