@@ -46,16 +46,21 @@ class ConeDetector():
 
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
-        debug_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
-        self.debug_pub.publish(debug_msg)
-
         bbox = cd_color_segmentation(image,"") #((x,y),(x+w,y+h))
 
-        center_pix = ConeLocationPixel()
-        center_pix.u = (bbox[0][0]+ bbox[1][0])/2
-        center_pix.v = np.max(bbox[0][1], bbox[1][1]) #get bottom one 
+        if bbox == ((0,0),(0,0)):
+            rospy.loginfo("no cone detected")
+        else:
+            center_pix = ConeLocationPixel()
+            center_pix.u = (bbox[0][0]+ bbox[1][0])/2
+            center_pix.v = np.max(bbox[0][1], bbox[1][1]) #get bottom one 
 
-        self.cone_pub.publish(center_pix)
+            self.cone_pub.publish(center_pix)
+        
+        #debug msg
+        image1 = cv2.rectangle(image, bbox[0], bbox[1], (0,225,0), 2)
+        debug_msg = self.bridge.cv2_to_imgmsg(image1, "bgr8")
+        self.debug_pub.publish(debug_msg)
 
 
 if __name__ == '__main__':
