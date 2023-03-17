@@ -68,8 +68,25 @@ def cd_sift_ransac(img, template):
 		pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
 		########## YOUR CODE STARTS HERE ##########
-
-		x_min = y_min = x_max = y_max = 0
+		x_min = y_min = float('inf')
+		x_max = y_max = 0
+		n = len(src_pts)
+		for i in range(n):
+				if(True): #matchesMask[i] == 1
+						point = np.array([np.append(src_pts[i], [1])])
+						out = np.dot(M, np.transpose(point))
+						# print(out)
+						out = out / out[2][0]
+						x = out[0][0]
+						y = out[1][0]
+						if(x < x_min):
+								x_min = x
+						if(x > x_max):
+								x_max = x
+						if(y < y_min):
+								y_min = y
+						if(y > y_max):
+								y_max = y
 
 		########### YOUR CODE ENDS HERE ###########
 
@@ -115,10 +132,25 @@ def cd_template_matching(img, template):
 		########## YOUR CODE STARTS HERE ##########
 		# Use OpenCV template matching functions to find the best match
 		# across template scales.
-
+		MAX = 0
+		MIN = float('inf')
+		bounding_box = ((0,0),(0,0))
+		methods = ['TM_CCOEFF_NORMED'] # 'TM_SQDIFF_NORMED', 'TM_CCOEFF_NORMED', 'TM_CCORR', 'TM_CCORR', 'TM_CCOEFF', 'TM_CCORR','TM_CCORR_NORMED', 'TM_SQDIFF', 'TM_SQDIFF_NORMED'
+		for m in methods:
+				res = cv2.matchTemplate(img_canny.copy(), resized_template.copy(), getattr(cv2, m)) #,getattr(cv2, m)
+				min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+				if m in [getattr(cv2, 'TM_SQDIFF'), getattr(cv2, 'TM_SQDIFF_NORMED')]:
+						top_left = min_loc
+						if(min_val < MIN):
+								bounding_box = ((top_left[0], top_left[1]), (top_left[0] + w, top_left[1] + h))
+								MIN = min_val
+				else:
+						top_left = max_loc
+						if(max_val > MAX):
+								bounding_box = ((top_left[0], top_left[1]), (top_left[0] + w, top_left[1] + h))
+								MAX = max_val
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
-		bounding_box = ((0,0),(0,0))
 		########### YOUR CODE ENDS HERE ###########
 
 	return bounding_box
