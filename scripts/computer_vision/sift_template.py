@@ -43,17 +43,27 @@ def cd_sift_ransac(img, template):
 
 	# Compute SIFT on template and test image
 	kp1, des1 = sift.detectAndCompute(template,None)
+	# plt.figure()
+	# plt.imshow(cv2.drawKeypoints(cv2.cvtColor(template, cv2.COLOR_BGR2GRAY), kp1,template))
 	kp2, des2 = sift.detectAndCompute(img,None)
+	# plt.figure()
+	# plt.imshow(cv2.drawKeypoints(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), kp2,img))
 
 	# Find matches
 	bf = cv2.BFMatcher()
 	matches = bf.knnMatch(des1,des2,k=2)
+ 
+	plt.figure()
+	plt.imshow(cv2.drawMatches(template,kp1,img,kp2,matches[:10], None,flags=2))
 
 	# Find and store good matches
 	good = []
 	for m,n in matches:
 		if m.distance < 0.75*n.distance:
 			good.append(m)
+	
+	# plt.figure()
+	# plt.imshow(cv2.drawKeypoints(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), good, img))
 
 	# If enough good matches, find bounding box
 	if len(good) > MIN_MATCH:
@@ -63,8 +73,7 @@ def cd_sift_ransac(img, template):
 		# Create mask
 		M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 		matchesMask = mask.ravel().tolist()
-
-		h, w = template.shape
+		h, w, c = template.shape
 		pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
 		########## YOUR CODE STARTS HERE ##########
@@ -72,7 +81,7 @@ def cd_sift_ransac(img, template):
 		x_max = y_max = 0
 		n = len(src_pts)
 		for i in range(n):
-				if(True): #matchesMask[i] == 1
+				if(True):
 						point = np.array([np.append(src_pts[i], [1])])
 						out = np.dot(M, np.transpose(point))
 						# print(out)
@@ -89,13 +98,11 @@ def cd_sift_ransac(img, template):
 								y_max = y
 
 		########### YOUR CODE ENDS HERE ###########
-
 		# Return bounding box
 		return ((x_min, y_min), (x_max, y_max))
 	else:
 
-		print "[SIFT] not enough matches; matches: ", len(good)
-
+		print("[SIFT] not enough matches; matches: ", len(good))
 		# Return bounding box of area 0 if no match found
 		return ((0,0), (0,0))
 
@@ -109,10 +116,16 @@ def cd_template_matching(img, template):
 				(x1, y1) is the bottom left of the bbox and (x2, y2) is the top right of the bbox
 	"""
 	template_canny = cv2.Canny(template, 50, 200)
-
+	# plt.figure()
+	# plt.imshow(template_canny, cmap='gray')
+ 
 	# Perform Canny Edge detection on test image
 	grey_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	img_canny = cv2.Canny(grey_img, 50, 200)
+	
+	plt.figure()
+	plt.imshow(img_canny, cmap='gray')
+	plt.figure()
 
 	# Get dimensions of template
 	(img_height, img_width) = img_canny.shape[:2]
@@ -121,9 +134,11 @@ def cd_template_matching(img, template):
 	best_match = None
 
 	# Loop over different scales of image
+	maximum = 0
 	for scale in np.linspace(1.5, .5, 50):
 		# Resize the image
 		resized_template = imutils.resize(template_canny, width = int(template_canny.shape[1] * scale))
+
 		(h,w) = resized_template.shape[:2]
 		# Check to see if test image is now smaller than template image
 		if resized_template.shape[0] > img_height or resized_template.shape[1] > img_width:
@@ -132,13 +147,13 @@ def cd_template_matching(img, template):
 		########## YOUR CODE STARTS HERE ##########
 		# Use OpenCV template matching functions to find the best match
 		# across template scales.
-		MAX = 0
-		MIN = float('inf')
-		bounding_box = ((0,0),(0,0))
+		# MIN = float('inf')
+		# bounding_box = ((0,0),(0,0))
 		methods = ['TM_CCOEFF_NORMED'] # 'TM_SQDIFF_NORMED', 'TM_CCOEFF_NORMED', 'TM_CCORR', 'TM_CCORR', 'TM_CCOEFF', 'TM_CCORR','TM_CCORR_NORMED', 'TM_SQDIFF', 'TM_SQDIFF_NORMED'
 		for m in methods:
 				res = cv2.matchTemplate(img_canny.copy(), resized_template.copy(), getattr(cv2, m)) #,getattr(cv2, m)
 				min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
 				if m in [getattr(cv2, 'TM_SQDIFF'), getattr(cv2, 'TM_SQDIFF_NORMED')]:
 						top_left = min_loc
 						if(min_val < MIN):
@@ -146,11 +161,14 @@ def cd_template_matching(img, template):
 								MIN = min_val
 				else:
 						top_left = max_loc
-						if(max_val > MAX):
+						if(max_val > maximum):
 								bounding_box = ((top_left[0], top_left[1]), (top_left[0] + w, top_left[1] + h))
-								MAX = max_val
+								# print(bounding_box)
+								# print(max_val)
+								# print(maximum)
+								# print()
+								maximum = max_val
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
 		########### YOUR CODE ENDS HERE ###########
-
 	return bounding_box
