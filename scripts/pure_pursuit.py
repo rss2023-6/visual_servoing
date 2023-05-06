@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-
 import rospy
 import numpy as np
 import time
-import utils
-import tf
 
-from tf.transformations import euler_from_quaternion, quaternion_from_euler
-from geometry_msgs.msg import PoseArray, PoseStamped, Pose, Point
-from visualization_msgs.msg import Marker
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float64, ColorRGBA
+from std_msgs.msg import Float64
 from sensor_msgs.msg import Joy
-from visual_servoing.msg import ConeLocation, ConeLocationPixel
+from visual_servoing.msg import ConeLocation
 
 class PurePursuit(object):
     """ Implements Pure Pursuit trajectory tracking with a fixed lookahead and speed.
@@ -29,13 +23,6 @@ class PurePursuit(object):
         self.cterr_pub = rospy.Publisher("/crosstrackerror", Float64,queue_size=1)
 
         self.cone_sub = rospy.Subscriber("/relative_cone", ConeLocation, self.cone_callback, queue_size = 20)
-
-        self.odom_sub = rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=1)
-
-        # self.current_location = np.array([0,0])
-        # self.x = self.current_location[0]
-        # self.y = self.current_location[1]
-        # self.theta = 0
 
         self.brake = False # Boolean condition to determine whether to stop
         # self.thresh = self.speed # distance from final path point at which car will stop

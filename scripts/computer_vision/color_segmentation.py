@@ -157,29 +157,29 @@ def cd_color_segmentation(img, template):
 		if area[i] >= min_size:
 			img2[output == i + 1] = 255
 
-	try:
-		### get hough transform and filter by slope and length 
-		src = np.uint8(img2)
-		src = cv2.GaussianBlur(src, (5, 5), 0)
-		dst = cv2.Canny(src, 50, 200, None, 3)
+	# try:
+	### get hough transform and filter by slope and length 
+	src = np.uint8(img2)
+	src = cv2.GaussianBlur(src, (5, 5), 0)
+	dst = cv2.Canny(src, 50, 200, None, 3)
 
-		minLineLength = 70
-		maxLineGap = 10
-		linesP = cv2.HoughLinesP(dst, 1, np.pi/180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
-		filtered_linesp = []
+	minLineLength = 70
+	maxLineGap = 10
+	linesP = cv2.HoughLinesP(dst, 1, np.pi/180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
+	filtered_linesp = []
 
-		if linesP is not None:
-			for line in linesP:
-				x1, y1, x2, y2 = line[0]
-				if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
-					filtered_linesp.append([x1, y1, x2, y2])
+	if linesP is not None:
+		for line in linesP:
+			x1, y1, x2, y2 = line[0]
+			if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
+				filtered_linesp.append([x1, y1, x2, y2])
 
-		intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
-		avg_pt = int((intersection_pt[0]+end_intersection_pt[0])/2), int((intersection_pt[1]+end_intersection_pt[1])/2)
-		
-		return avg_pt
-	except:
-		return None
+	intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
+	avg_pt = int((intersection_pt[0]+end_intersection_pt[0])/2), int((intersection_pt[1]+end_intersection_pt[1])/2)
+	
+	return avg_pt
+	# except:
+	# 	return None
 		
 # import cv2
 # import numpy as np
