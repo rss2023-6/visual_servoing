@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="visual_servoing" type="pure_pursuit.py" name="Trajectory_follower"></node>
+</launch>
