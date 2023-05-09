@@ -39,6 +39,13 @@ class PurePursuit(object):
     def cone_callback(self, msg):
         x = msg.x_pos
         y = msg.y_pos
+        
+        def cte(x,y): # Currently publishes relative cross track error
+            return x
+
+        cterr = Float64()
+        cterr.data = cte(x,y)
+        self.cterr_pub.publish(cterr)
         self.drive_command(x, y)
 
     def drive_command(self, goalx, goaly):
