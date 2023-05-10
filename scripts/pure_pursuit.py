@@ -22,7 +22,17 @@ class PurePursuit(object):
 
         self.cterr_pub = rospy.Publisher("/crosstrackerror", Float64,queue_size=1)
 
+        self.bufferr_pub = rospy.Publisher("/buffererror",Float64,queue_size=1)
+
         self.cone_sub = rospy.Subscriber("/relative_cone", ConeLocation, self.cone_callback, queue_size = 20)
+
+        self.buffer_count = 0
+        
+        self.buffer_y = 0
+        
+        self.imgBufferLim = 5
+
+        self.avg_pt = np.array([0,0])
 
         self.brake = False # Boolean condition to determine whether to stop
         # self.thresh = self.speed # distance from final path point at which car will stop
@@ -47,11 +57,31 @@ class PurePursuit(object):
         #rospy.logerr("x: {} y: {}".format(x, y))
         def cte(x,y): # Currently publishes relative cross track error
             return y
+        bfe = lambda y: abs(self.buffer_y - y)
 
         cterr = Float64()
+        bferr = Float64()
+        # Averaging Buffer, TODO listener for state of driving around turn vs not.
+
+        if self.buffer_count == self.imgBufferLim:
+            self.avg_pt /= self.imgBufferLim
+            self.drive_command(self.avg_pt[0], self.avg_pt[1])
+            self.buffer_y = self.avg_pt[1]
+            self.buffer_count = 0
+            cterr.data = cte(self.avg_pt[0],self.avg_pt[1])
+            bferr.data = bfe(self.avg_pt[1])
+            self.cterr_pub.publish(cterr)
+            self.bufferr_pub.publish(bferr)
+            self.avg_pt = np.array([0,0])
+            return
+        self.avg_pt += np.array([x,y])
+
         cterr.data = cte(x,y)
+        bferr.data = bfe(y)
         self.cterr_pub.publish(cterr)
-        self.drive_command(x, y)
+        self.bufferr_pub.publish(bferr)
+
+        
 
     def drive_command(self, goalx, goaly):
         #rospy.logerr("x: {}, y: {}".format(self.x, self.y))
