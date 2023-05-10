@@ -26,7 +26,7 @@ class ConeDetector():
 
         # Subscribe to ZED camera RGB frames
         self.cone_pub = rospy.Publisher("/relative_cone_px", ConeLocationPixel, queue_size=10)
-        self.debug_pub = rospy.Publisher("/cone_debug_img", Image, queue_size=10)
+        self.debug_pub = rospy.Publisher("/cone_debug_img", Image, queue_size=30)
         self.image_sub = rospy.Subscriber("/zed/zed_node/rgb/image_rect_color", Image, self.image_callback)
         self.bridge = CvBridge() # Converts between ROS images and OpenCV Images
 
@@ -51,7 +51,7 @@ class ConeDetector():
         #debug msg
         image1 = cv2.circle(image, avg_pt, 5, (0,225,0), -1) #radius = 5
         debug_msg = self.bridge.cv2_to_imgmsg(image1, "bgr8")
-        self.debug_pub.publish(debug_msg)
+       	self.debug_pub.publish(debug_msg)
 
         if not avg_pt:
             rospy.loginfo("no directions detected")

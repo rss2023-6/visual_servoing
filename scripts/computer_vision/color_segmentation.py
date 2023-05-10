@@ -91,6 +91,7 @@ def best_lines_bisector_line(fd_linesp, shape):
     x_max,y_max = shape[1],shape[0]
     ####testing
     all_lines = np.array(fd_linesp)
+    #print(all_lines)
     start_pts = all_lines[:, :2]
     end_pts = all_lines[:, 2:]
     
@@ -104,15 +105,16 @@ def best_lines_bisector_line(fd_linesp, shape):
     neg_idx = np.where(angles[sort_ind]<-0.2)#np.argmax(angles) #left
     
     # Get start and end points of the two lines
-    A,B = (0-0.001,y_max),(0,0) #left side
+    #A,B = (0-0.001,y_max),(0,0) #left side
     C,D = (x_max+0.001,y_max),(x_max,0) #right side
+    A,B = C,D
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
-        med_pos = round(np.median(pos_idx))
+        med_pos = int(round(np.median(pos_idx)))
 #         print("median pos index:", med_pos)
         C,D = (sorted_lines[med_pos][0],sorted_lines[med_pos][1]),(sorted_lines[med_pos][2],sorted_lines[med_pos][3])
 
     if np.size(neg_idx, axis=None):
-        neg_pos = round(np.median(neg_idx))
+        neg_pos = int(round(np.median(neg_idx)))
         A,B = (sorted_lines[neg_pos][0],sorted_lines[neg_pos][1]),(sorted_lines[neg_pos][2],sorted_lines[neg_pos][3])
     
     # Compute intersection point of the two lines
@@ -131,7 +133,7 @@ def best_lines_bisector_line(fd_linesp, shape):
     # print(intersection_pt, end_intersection_pt)
     return intersection_pt, end_intersection_pt
 
-def cd_color_segmentation(img, template, visualize =True):
+def cd_color_segmentation(img, template, visualize =False):
     """
     Implement the cone detection using color segmentation algorithm
     Input:
@@ -196,20 +198,34 @@ def cd_color_segmentation(img, template, visualize =True):
             if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
                 filtered_linesp.append([x1, y1, x2, y2])
 
-    intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
-    avg_pt = int((intersection_pt[0]+end_intersection_pt[0])/2), int((intersection_pt[1]+end_intersection_pt[1])/2)
+    #If no line is detected, add line done the center
+    if len(filtered_linesp) == 0:
+         filtered_linesp.append([336, 0, 336, 376])
 
+    intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
+
+    g = ((intersection_pt[1] - end_intersection_pt[1])/(intersection_pt[0] - end_intersection_pt[0]))
+    #If absolute gradient is less than 0.25, set look ahead point 75% along line ahead, else do 30%
+    #if abs(g) <= 1:
+    d = 0.15
+    #else:
+        #d = 0.7
+
+    
+    avg_pt = int(intersection_pt[0] + (end_intersection_pt[0] - intersection_pt[0]) * d), int(intersection_pt[1] + (end_intersection_pt[1] - intersection_pt[1]) * d)
+   
+    #print(g)
     if visualize:
         cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
         cv2.circle(img, avg_pt, radius=5, color=(225, 0, 255), thickness=-1)
         image_print(img)
-                
+
     return avg_pt
     # except:
     # 	return None
 
 
 if __name__ == '__main__':
-    _img = cv2.imread("/Users/kristinezheng/racecar_docker/home/racecar_ws/src/final_challenge2023/track_img/c5.png")
+    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\c5.png")
 
     cd_color_segmentation(_img, "", True)

@@ -14,7 +14,7 @@ class PurePursuit(object):
     """
     def __init__(self):
         self.odom_topic       = rospy.get_param("~odom_topic","/pf/pose/odom")
-        self.speed            = 3.0 #filled in for testing purposes, please update
+        self.speed            = 0.4 #filled in for testing purposes, please update
         self.wheelbase_length = 0.32 #flilled in for testing purposes, please update
 
         self.drive_pub = rospy.Publisher("/vesc/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1)
@@ -37,11 +37,16 @@ class PurePursuit(object):
             self.pressed = False
 
     def cone_callback(self, msg):
-        x = msg.x_pos
-        y = msg.y_pos
-        
+	#x = msg.x_pos
+	#y = msg.y_pos
+        #d = np.sqrt(x*x + y*y)
+	#radius = 3
+	#scale = radius / d
+	x = msg.x_pos
+        y = msg.y_pos 
+        #rospy.logerr("x: {} y: {}".format(x, y))
         def cte(x,y): # Currently publishes relative cross track error
-            return x
+            return y
 
         cterr = Float64()
         cterr.data = cte(x,y)
@@ -52,7 +57,8 @@ class PurePursuit(object):
         #rospy.logerr("x: {}, y: {}".format(self.x, self.y))
         #rospy.logerr("goalx: {}, goaly: {}".format(goalx, goaly))
         #ospy.logerr("a")
-
+        
+        #!!! (x,y) as output by homography transform are reversed to those expected by pure pursuit
         eta = np.arctan2(goaly, goalx)
         # R = self.lookahead / (2 * np.sin(eta))
         AckermannDrive = AckermannDriveStamped()
@@ -72,6 +78,7 @@ class PurePursuit(object):
         # AckermannDrive.drive.steering_angle = -1 * np.arctan(self.wheelbase_length * np.sin(eta) / (self.lookahead / 2  + lfw/np.cos(eta)))
         if (self.pressed):
             self.drive_pub2.publish(AckermannDrive)
+	print(AckermannDrive)
         self.drive_pub.publish(AckermannDrive)
 
 if __name__=="__main__":
