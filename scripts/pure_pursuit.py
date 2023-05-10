@@ -14,7 +14,7 @@ class PurePursuit(object):
     """
     def __init__(self):
         self.odom_topic       = rospy.get_param("~odom_topic","/pf/pose/odom")
-        self.speed            = 0.4 #filled in for testing purposes, please update
+        self.speed            = 2 #filled in for testing purposes, please update
         self.wheelbase_length = 0.32 #flilled in for testing purposes, please update
 
         self.drive_pub = rospy.Publisher("/vesc/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1)
@@ -42,7 +42,7 @@ class PurePursuit(object):
         #d = np.sqrt(x*x + y*y)
 	#radius = 3
 	#scale = radius / d
-	x = msg.x_pos
+        x = msg.x_pos
         y = msg.y_pos 
         #rospy.logerr("x: {} y: {}".format(x, y))
         def cte(x,y): # Currently publishes relative cross track error
@@ -58,6 +58,7 @@ class PurePursuit(object):
         #rospy.logerr("goalx: {}, goaly: {}".format(goalx, goaly))
         #ospy.logerr("a")
         
+        print("target point(m):",  (goalx, goaly))
         #!!! (x,y) as output by homography transform are reversed to those expected by pure pursuit
         eta = np.arctan2(goaly, goalx)
         # R = self.lookahead / (2 * np.sin(eta))
@@ -69,16 +70,18 @@ class PurePursuit(object):
             AckermannDrive.drive.speed = 0
             AckermannDrive.drive.steering_angle = 0
         else:
-            rospy.logerr("sending drive signal")
             AckermannDrive.drive.speed = self.speed
-            AckermannDrive.drive.steering_angle = np.arctan2(2 * self.wheelbase_length * np.sin(eta), np.sqrt(goalx**2 + goaly**2))
+            angle = np.arctan2(2 * self.wheelbase_length * np.sin(eta), np.sqrt(goalx**2 + goaly**2))
+            if abs(angle) >= 0.34:
+                angle = 0.34 * np.sign(angle)
+            AckermannDrive.drive.steering_angle = angle
+            rospy.logerr(angle)
 
         #generalized sttering law by having a point ahead lecture slides
         # lfw = 0.05 #randomly defined based on lecture slides
         # AckermannDrive.drive.steering_angle = -1 * np.arctan(self.wheelbase_length * np.sin(eta) / (self.lookahead / 2  + lfw/np.cos(eta)))
         if (self.pressed):
             self.drive_pub2.publish(AckermannDrive)
-	print(AckermannDrive)
         self.drive_pub.publish(AckermannDrive)
 
 if __name__=="__main__":

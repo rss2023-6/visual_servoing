@@ -94,32 +94,34 @@ def best_lines_bisector_line(fd_linesp, shape):
     #print(all_lines)
     start_pts = all_lines[:, :2]
     end_pts = all_lines[:, 2:]
-    
+
     # Compute angles for all lines
     angles = np.arctan2(end_pts[:, 1] - start_pts[:, 1], end_pts[:, 0] - start_pts[:, 0])
     sort_ind = np.argsort(angles)
     sorted_lines = all_lines[sort_ind]
     
     # Find lines with minimum and maximum angles
-    pos_idx = np.where(angles[sort_ind]>0.2)#np.argmin(angles) #right
-    neg_idx = np.where(angles[sort_ind]<-0.2)#np.argmax(angles) #left
+    pos_idx = np.where(angles[sort_ind]> 0.3)#np.argmin(angles) #right
+    neg_idx = np.where(angles[sort_ind]< -0.3)#np.argmax(angles) #left
+
     
     # Get start and end points of the two lines
-    #A,B = (0-0.001,y_max),(0,0) #left side
-    C,D = (x_max+0.001,y_max),(x_max,0) #right side
-    A,B = C,D
+    A,B = (0,y_max),(x_max/2,0) #left side
+    C,D = (x_max,y_max),(x_max/2,0) #right side
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
-        med_pos = int(round(np.median(pos_idx)))
+        med_pos = pos_idx[0][-1]
+        #med_pos = int(round(np.median(pos_idx)))
 #         print("median pos index:", med_pos)
         C,D = (sorted_lines[med_pos][0],sorted_lines[med_pos][1]),(sorted_lines[med_pos][2],sorted_lines[med_pos][3])
 
     if np.size(neg_idx, axis=None):
-        neg_pos = int(round(np.median(neg_idx)))
+        neg_pos = neg_idx[0][0]
+        #neg_pos = int(round(np.median(neg_idx)))
         A,B = (sorted_lines[neg_pos][0],sorted_lines[neg_pos][1]),(sorted_lines[neg_pos][2],sorted_lines[neg_pos][3])
-    
+
     # Compute intersection point of the two lines
     intersection_pt = get_intersect(A, B, C, D)
-    
+
     slope, y_intercept = angle_bisector_equation(A, B, C, D)
     avg_y = y_max #(B[0] + D[0]) / 2
     a_x = (avg_y - y_intercept) / slope
@@ -132,6 +134,57 @@ def best_lines_bisector_line(fd_linesp, shape):
 
     # print(intersection_pt, end_intersection_pt)
     return intersection_pt, end_intersection_pt
+
+def get_strong_hough_lines(lines):
+    lines_arr = np.array(lines)
+
+    # Initialize an empty array to store strong lines
+    strong_lines = np.empty((0, 2))
+
+    # Iterate over each line
+    for line in lines_arr:
+        rho, theta = line[0]
+
+        # Check if the line satisfies the conditions
+        if np.all(np.abs(strong_lines[:, 0] - rho) > 50) and np.all(np.abs(strong_lines[:, 1] - theta) > 0.1 * np.abs(theta)):
+            strong_lines = np.vstack((strong_lines, line[0]))
+
+    return strong_lines
+
+def polar2cartesian(rho, theta_rad, rotate90 = False):
+    """
+    Converts line equation from polar to cartesian coordinates
+
+    Args:
+        rho: input line rho
+        theta_rad: input line theta
+        rotate90: output line perpendicular to the input line
+
+    Returns:
+        m: slope of the line
+           For horizontal line: m = 0
+           For vertical line: m = np.nan
+        b: intercept when x=0
+    """
+    x = np.cos(theta_rad) * rho
+    y = np.sin(theta_rad) * rho
+    m = np.nan
+    if not np.isclose(x, 0.0):
+        m = y / x
+    if rotate90:
+        if m is np.nan:
+            m = 0.0
+        elif np.isclose(m, 0.0):
+            m = np.nan
+        else:
+            m = -1.0 / m
+    b = 0.0
+    if m is not np.nan:
+        b = y - m * x
+
+    return m, b
+        
+
 
 def cd_color_segmentation(img, template, visualize =False):
     """
@@ -190,42 +243,51 @@ def cd_color_segmentation(img, template, visualize =False):
     minLineLength = 70
     maxLineGap = 10
     linesP = cv2.HoughLinesP(dst, 1, np.pi/180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
+
+    lines = cv2.HoughLines(dst, 1, np.pi/180, threshold=50)
+    filteredLines = get_strong_hough_lines(lines)
+
+    print(filteredLines)
+   
     filtered_linesp = []
 
-    if linesP is not None:
-        for line in linesP:
+    for line in filteredLines:
+        m, b = polar2cartesian(line[0], line[1], True)
+        filtered_linesp.append([0, b, -b/m, 0])
+
+    #if linesP is not None:
+    #    for line in linesP:
+    #        x1, y1, x2, y2 = line[0]
+    #        if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
+    #           filtered_linesp.append([x1, y1, x2, y2])
+
+    print(filtered_linesp)
+
+    if len(filtered_linesp) == 0:
+       for line in linesP:
             x1, y1, x2, y2 = line[0]
-            if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
+            if get_length((x1, y1), (x2, y2)) >= minLineLength:
                 filtered_linesp.append([x1, y1, x2, y2])
 
     #If no line is detected, add line done the center
     if len(filtered_linesp) == 0:
-         filtered_linesp.append([336, 0, 336, 376])
+         filtered_linesp.append([335, 0, 336, 376])
 
     intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
 
-    g = ((intersection_pt[1] - end_intersection_pt[1])/(intersection_pt[0] - end_intersection_pt[0]))
-    #If absolute gradient is less than 0.25, set look ahead point 75% along line ahead, else do 30%
-    #if abs(g) <= 1:
-    d = 0.15
-    #else:
-        #d = 0.7
-
-    
-    avg_pt = int(intersection_pt[0] + (end_intersection_pt[0] - intersection_pt[0]) * d), int(intersection_pt[1] + (end_intersection_pt[1] - intersection_pt[1]) * d)
+    print(end_intersection_pt[0])
    
     #print(g)
     if visualize:
         cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
-        cv2.circle(img, avg_pt, radius=5, color=(225, 0, 255), thickness=-1)
         image_print(img)
 
-    return avg_pt
+    return intersection_pt, end_intersection_pt
     # except:
     # 	return None
 
 
 if __name__ == '__main__':
-    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\c5.png")
+    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\1.png")
 
     cd_color_segmentation(_img, "", True)
