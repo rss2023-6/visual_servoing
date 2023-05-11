@@ -11,7 +11,7 @@ class WallFollower:
     # Import ROS parameters from the "params.yaml" file.
     # Access these variables in class functions with self:
     # i.e. self.CONSTANT
-    DRIVE_TOPIC = rospy.get_param("/drive_topic")
+    DRIVE_TOPIC = rospy.get_param("/vesc/ackermann_cmd_mux/input/navigation")
     ERROR_TOPIC = rospy.get_param("/lane_error")
     history_dist = 0
     history_para = 0
