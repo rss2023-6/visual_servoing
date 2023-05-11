@@ -107,8 +107,8 @@ def best_lines_bisector_line(fd_linesp, shape):
     print(pos_idx)
     print(neg_idx)
     # Get start and end points of the two lines
-    A,B = (0,y_max),(x_max/2,0) #left side
-    C,D = (x_max,y_max),(x_max/2,0) #right side
+    A,B = (-5000,y_max),(x_max/2,0) #left side
+    C,D = (5000,y_max),(x_max/2,0) #right side
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
         med_pos = pos_idx[0][-1]
         #med_pos = int(round(np.median(pos_idx)))
@@ -270,9 +270,6 @@ def cd_color_segmentation(img, template, visualize =False):
             if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
                filtered_linesp.append([x1, y1, x2, y2])
 
-    print(filtered_linesp)
-
-
     if len(filtered_linesp) == 0:
        for line in linesP:
             x1, y1, x2, y2 = line[0]
@@ -287,6 +284,8 @@ def cd_color_segmentation(img, template, visualize =False):
 
     left = transformUvToXy(X_1, 376)
     right = transformUvToXy(X_2, 376)
+
+    print(left, right)
 
 
     #print(g)
@@ -314,19 +313,19 @@ def transformUvToXy(u, v):
         Units are in meters.
         """
 
-        PTS_IMAGE_PLANE = [[303, 367],
-                   [319, 262],
-                   [325, 238],
-                   [547, 361],
-                   [482, 259],
-                   [152, 265],] # dummy points
-#
-        PTS_GROUND_PLANE = [[10.0, 0.0],
-                    [20.0, 0.0],
-                    [25.0, 0.0],
-                    [10.0, -8.0],
-                    [20.0, -10.0],
-                    [20.0, 10.0],]
+        PTS_IMAGE_PLANE =   [[180, 172],
+                    [315,226],
+                    [331, 170],
+                    [494, 159],
+                    [432, 210],
+                    [217, 220],]
+  
+        PTS_GROUND_PLANE = [[110.0, 50.0],
+                    [30.0, 0.0],
+                    [110, 0.0],
+                    [110.0, -50.0],
+                    [30.0, -10.0],
+                    [30.0, 10.0]]
         
         METERS_PER_INCH = 0.0254
 
@@ -350,6 +349,6 @@ def transformUvToXy(u, v):
 
 
 if __name__ == '__main__':
-    #_img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\1.png")
-    _img = cv2.imread("../../images/0.34.png")
+    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\0.34.png")
+    #_img = cv2.imread("../../images/0.34.png")
     cd_color_segmentation(_img, "", True)
