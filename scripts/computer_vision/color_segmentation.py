@@ -110,8 +110,8 @@ def best_lines_bisector_line(fd_linesp, shape):
     print(pos_idx)
     print(neg_idx)
     # Get start and end points of the two lines
-    A,B = (-5000,y_max),(float(x_max)/float(2),0) #left side
-    C,D = (5000,y_max),(float(x_max)/float(2),0) #right side
+    A,B = (0,y_max),(float(x_max)/float(2),0) #left side
+    C,D = (640,y_max),(float(x_max)/float(2),0) #right side
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
         med_pos = pos_idx[0][-1]
         #med_pos = int(round(np.median(pos_idx)))
@@ -125,12 +125,12 @@ def best_lines_bisector_line(fd_linesp, shape):
 
     m_1 = get_slope(A, B)
     b_1 = A[1]*1.0 - m_1*A[0]*1.0
-    X_1 = float(376 - b_1)/float(m_1)
+    X_1 = float(360 - b_1)/float(m_1)
     #rospy.logerr("mbx1{} {} {}".format(m_1, b_1, X_1))
     
     m_2 = get_slope(C, D)
     b_2 = C[1]*1.0 - m_2*C[0]*1.0
-    X_2 = float(376 - b_2)/float(m_2)
+    X_2 = float(360 - b_2)/float(m_2)
     
     #rospy.logerr("mbx2 {} {} {}".format(m_2, b_2, X_2))
     return X_1, X_2
@@ -291,16 +291,16 @@ def cd_color_segmentation(img, template, visualize =False):
     X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
     #rospy.logerr("X1{}".format(X_1))
     #rospy.logerr("X2{}".format(X_2))
-    left = transformUvToXy(X_1, 376)
-    right = transformUvToXy(X_2, 376)
+    left = transformUvToXy(X_1, 360)
+    right = transformUvToXy(X_2, 360)
 
     print(left, right)
 
 
     #print(g)
     if visualize:
-        cv2.circle(img, (int(X_1), 376), radius=10, color=(225, 0, 255))
-        cv2.circle(img, (int(X_2), 376), radius=10, color=(225, 0, 255))
+        cv2.circle(img, (int(X_1), 360), radius=10, color=(225, 0, 255))
+        cv2.circle(img, (int(X_2), 360), radius=10, color=(225, 0, 255))
         #cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
         image_print(img)
 
