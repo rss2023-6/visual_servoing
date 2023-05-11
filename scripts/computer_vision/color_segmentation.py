@@ -1,7 +1,9 @@
+from __future__ import division
 import cv2
 import numpy as np
 import pdb
 import math
+import rospy
 
 #################### X-Y CONVENTIONS #########################
 # 0,0  X  > > > > >
@@ -65,17 +67,17 @@ def angle_bisector_equation(p1, p2, q1, q2):
     tuple: a tuple containing the slope and y-intercept of the angle bisector
     """
     m1 = get_slope(p1,p2)
-    b1 = p1[1] - (m1 * p1[0])
+    b1 = p1[1]*1.0 - (m1 * p1[0]*1.0)
     m2 = get_slope(q1, q2)
-    b2 = q1[1] - (m2 * q1[0])
+    b2 = q1[1]*1.0 - (m2 * q1[0]*1.0)
     
-    A1 = -m1
-    B1 = 1
-    C1 = -b1 
+    A1 = -1.0*m1
+    B1 = 1.0
+    C1 = -1.0*b1 
     
-    A2 = -m2
-    B2 = 1
-    C2 = -b2
+    A2 = -1.0*m2
+    B2 = 1.0
+    C2 = -1.0*b2
 
     sqrt1 = math.sqrt(A1**2+B1**2)
     sqrt2= math.sqrt(A2**2+B2**2)
@@ -88,6 +90,7 @@ def angle_bisector_equation(p1, p2, q1, q2):
     return new_slope, new_yintercept
 
 def best_lines_bisector_line(fd_linesp, shape):
+    #rospy.logerr("fd{}".format(fd_linesp))
     x_max,y_max = shape[1],shape[0]
     ####testing
     all_lines = np.array(fd_linesp)
@@ -121,13 +124,15 @@ def best_lines_bisector_line(fd_linesp, shape):
         A,B = (sorted_lines[neg_pos][0],sorted_lines[neg_pos][1]),(sorted_lines[neg_pos][2],sorted_lines[neg_pos][3])
 
     m_1 = get_slope(A, B)
-    b_1 = A[1] - m_1*A[0]
-    X_1 = (376 - b_1)/m_1
-
+    b_1 = A[1]*1.0 - m_1*A[0]*1.0
+    X_1 = (376.0 - b_1*1.0)/(1.0*m_1)
+    #rospy.logerr("mbx1{} {} {}".format(m_1, b_1, X_1))
+    
     m_2 = get_slope(C, D)
-    b_2 = C[1] - m_2*C[0]
-    X_2 = (376 - b_2)/m_2
-
+    b_2 = C[1]*1.0 - m_2*C[0]*1.0
+    X_2 = (376 - b_2)/(1.0*m_2)
+    
+    #rospy.logerr("mbx2 {} {} {}".format(m_2, b_2, X_2))
     return X_1, X_2
 
     # Compute intersection point of the two lines
@@ -270,6 +275,9 @@ def cd_color_segmentation(img, template, visualize =False):
             if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
                filtered_linesp.append([x1, y1, x2, y2])
 
+    print(filtered_linesp)
+
+
     if len(filtered_linesp) == 0:
        for line in linesP:
             x1, y1, x2, y2 = line[0]
@@ -281,7 +289,8 @@ def cd_color_segmentation(img, template, visualize =False):
          filtered_linesp.append([335, 0, 336, 376])
 
     X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
-
+    #rospy.logerr("X1{}".format(X_1))
+    #rospy.logerr("X2{}".format(X_2))
     left = transformUvToXy(X_1, 376)
     right = transformUvToXy(X_2, 376)
 
@@ -348,7 +357,7 @@ def transformUvToXy(u, v):
         return x, y
 
 
-if __name__ == '__main__':
-    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\0.34.png")
+#if __name__ == '__main__':
+#    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\0.34.png")
     #_img = cv2.imread("../../images/0.34.png")
-    cd_color_segmentation(_img, "", True)
+#    cd_color_segmentation(_img, "", True)

@@ -33,26 +33,27 @@ class WallFollower:
         solution.drive.speed = solution_speed
         solution.drive.acceleration = 0
         solution.drive.jerk = 0
-        #rospy.loginfo(solution_angle)
+        rospy.logerr(solution_angle)
         self.drive_pub.publish(solution)
-
+        
     
     def compute_drive(self, error):
         # Computes the steering angle and speed of the car
         speed = 4
-        p_gain = .7
-        d_gain = .5
+        p_gain = .4
+        d_gain = .1
         #rospy.loginfo((error,'distance'))
         derr_dist = error-self.history_dist
         self.history_dist = error
         P = p_gain*error
+        max_angle = 0.17
         D = -d_gain*derr_dist
         steering_angle = P+D
-        if steering_angle > .34:
-            steering_angle = .34
+        if steering_angle > max_angle:
+            steering_angle = max_angle
             
-        elif steering_angle <-.34:
-	        steering_angle = -.34
+        elif steering_angle <-1.0*max_angle:
+	        steering_angle = -1.0*max_angle
         
         return steering_angle, speed
 if __name__ == "__main__":

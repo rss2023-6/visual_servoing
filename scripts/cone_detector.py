@@ -47,6 +47,7 @@ class ConeDetector():
         #################################
 
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
+        
 
         Left, Right = cd_color_segmentation(image,"", False) #((x,y),(x+w,y+h))
 
@@ -54,8 +55,8 @@ class ConeDetector():
         #image1 = cv2.line(image, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA) #radius = 5
         #debug_msg = self.bridge.cv2_to_imgmsg(image1, "bgr8")
         #self.debug_pub.publish(debug_msg)
-        rospy.logerr(Left)
-        rospy.logerr("Right{}".format(Right))
+        #rospy.logerr(Left)
+        #rospy.logerr("Right{}".format(Right))
         self.err_pub.publish(Left[1] + Right[1])
         #if not intersection_pt:
             #rospy.loginfo("no directions detected")
