@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 import rospy
 import numpy as np
 import time
@@ -64,7 +65,7 @@ class PurePursuit(object):
         # Averaging Buffer, TODO listener for state of driving around turn vs not.
 
         if self.buffer_count == self.imgBufferLim:
-            self.avg_pt /= self.imgBufferLim
+            self.avg_pt /= float(self.imgBufferLim)
             self.drive_command(self.avg_pt[0], self.avg_pt[1])
             self.buffer_y = self.avg_pt[1]
             self.buffer_count = 0
