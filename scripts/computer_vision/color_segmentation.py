@@ -110,8 +110,8 @@ def best_lines_bisector_line(fd_linesp, shape):
     print(pos_idx)
     print(neg_idx)
     # Get start and end points of the two lines
-    A,B = (-5000,y_max),(float(x_max)/float(2,0)) #left side
-    C,D = (5000,y_max),(float(x_max)/float(2,0)) #right side
+    A,B = (-5000,y_max),(float(x_max)/float(2),0) #left side
+    C,D = (5000,y_max),(float(x_max)/float(2),0) #right side
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
         med_pos = pos_idx[0][-1]
         #med_pos = int(round(np.median(pos_idx)))
