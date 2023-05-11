@@ -104,7 +104,8 @@ def best_lines_bisector_line(fd_linesp, shape):
     pos_idx = np.where(angles[sort_ind]> 0.3)#np.argmin(angles) #right
     neg_idx = np.where(angles[sort_ind]< -0.3)#np.argmax(angles) #left
 
-    
+    print(pos_idx)
+    print(neg_idx)
     # Get start and end points of the two lines
     A,B = (0,y_max),(x_max/2,0) #left side
     C,D = (x_max,y_max),(x_max/2,0) #right side
@@ -119,9 +120,18 @@ def best_lines_bisector_line(fd_linesp, shape):
         #neg_pos = int(round(np.median(neg_idx)))
         A,B = (sorted_lines[neg_pos][0],sorted_lines[neg_pos][1]),(sorted_lines[neg_pos][2],sorted_lines[neg_pos][3])
 
+    m_1 = get_slope(A, B)
+    b_1 = A[1] - m_1*A[0]
+    X_1 = (376 - b_1)/m_1
+
+    m_2 = get_slope(C, D)
+    b_2 = C[1] - m_2*C[0]
+    X_2 = (376 - b_2)/m_2
+
+    return X_1, X_2
+
     # Compute intersection point of the two lines
     intersection_pt = get_intersect(A, B, C, D)
-
     slope, y_intercept = angle_bisector_equation(A, B, C, D)
     avg_y = y_max #(B[0] + D[0]) / 2
     a_x = (avg_y - y_intercept) / slope
@@ -238,30 +248,30 @@ def cd_color_segmentation(img, template, visualize =False):
     ### get hough transform and filter by slope and length 
     src = np.uint8(img2)
     src = cv2.GaussianBlur(src, (5, 5), 0)
-    dst = cv2.Canny(src, 50, 200, None, 3)
+    dst = cv2.Canny(src, 10, 600, None, 3)
 
     minLineLength = 70
     maxLineGap = 10
     linesP = cv2.HoughLinesP(dst, 1, np.pi/180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
 
-    lines = cv2.HoughLines(dst, 1, np.pi/180, threshold=50)
-    filteredLines = get_strong_hough_lines(lines)
+    #lines = cv2.HoughLines(dst, 1, np.pi/180, threshold=50)
+    #filteredLines = get_strong_hough_lines(lines)
 
-    print(filteredLines)
-   
+  
     filtered_linesp = []
 
-    for line in filteredLines:
-        m, b = polar2cartesian(line[0], line[1], True)
-        filtered_linesp.append([0, b, -b/m, 0])
+    #for line in lines:
+    #    m, b = polar2cartesian(line[0][0], line[0][1], True)
+    #    filtered_linesp.append([0, b, -b/m, 0])
 
-    #if linesP is not None:
-    #    for line in linesP:
-    #        x1, y1, x2, y2 = line[0]
-    #        if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
-    #           filtered_linesp.append([x1, y1, x2, y2])
+    if linesP is not None:
+        for line in linesP:
+            x1, y1, x2, y2 = line[0]
+            if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
+               filtered_linesp.append([x1, y1, x2, y2])
 
     print(filtered_linesp)
+
 
     if len(filtered_linesp) == 0:
        for line in linesP:
@@ -273,21 +283,73 @@ def cd_color_segmentation(img, template, visualize =False):
     if len(filtered_linesp) == 0:
          filtered_linesp.append([335, 0, 336, 376])
 
-    intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
+    X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
 
-    print(end_intersection_pt[0])
-   
+    left = transformUvToXy(X_1, 376)
+    right = transformUvToXy(X_2, 376)
+
+
     #print(g)
     if visualize:
-        cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
+        cv2.circle(img, (int(X_1), 376), radius=10, color=(225, 0, 255))
+        cv2.circle(img, (int(X_2), 376), radius=10, color=(225, 0, 255))
+        #cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
         image_print(img)
 
-    return intersection_pt, end_intersection_pt
+    return left, right
     # except:
     # 	return None
 
+def transformUvToXy(u, v):
+        """
+        u and v are pixel coordinates.
+        The top left pixel is the origin, u axis increases to right, and v axis
+        increases down.
+
+        Returns a normal non-np 1x2 matrix of xy displacement vector from the
+        camera to the point on the ground plane.
+        Camera points along positive x axis and y axis increases to the left of
+        the camera.
+
+        Units are in meters.
+        """
+
+        PTS_IMAGE_PLANE = [[303, 367],
+                   [319, 262],
+                   [325, 238],
+                   [547, 361],
+                   [482, 259],
+                   [152, 265],] # dummy points
+#
+        PTS_GROUND_PLANE = [[10.0, 0.0],
+                    [20.0, 0.0],
+                    [25.0, 0.0],
+                    [10.0, -8.0],
+                    [20.0, -10.0],
+                    [20.0, 10.0],]
+        
+        METERS_PER_INCH = 0.0254
+
+        np_pts_ground = np.array(PTS_GROUND_PLANE)
+        np_pts_ground = np_pts_ground * METERS_PER_INCH
+        np_pts_ground = np.float32(np_pts_ground[:, np.newaxis, :])
+
+        np_pts_image = np.array(PTS_IMAGE_PLANE)
+        np_pts_image = np_pts_image * 1.0
+        np_pts_image = np.float32(np_pts_image[:, np.newaxis, :])
+
+        h, err = cv2.findHomography(np_pts_image, np_pts_ground)
+
+        homogeneous_point = np.array([[u], [v], [1]])
+        xy = np.dot(h, homogeneous_point)
+        scaling_factor = 1.0 / xy[2, 0]
+        homogeneous_xy = xy * scaling_factor
+        x = homogeneous_xy[0, 0]
+        y = homogeneous_xy[1, 0]
+        return x, y
+
 
 if __name__ == '__main__':
-    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\1.png")
-
+    #_img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\1.png")
+    _img = cv2.imread("../../images/0.34.png")
     cd_color_segmentation(_img, "", True)
