@@ -118,7 +118,7 @@ class HomographyTransformer:
         """
         homogeneous_point = np.array([[u], [v], [1]])
         xy = np.dot(self.h, homogeneous_point)
-        scaling_factor = 1.0 / xy[2, 0]
+        scaling_factor = 1.0 /float(xy[2, 0])
         homogeneous_xy = xy * scaling_factor
         x = homogeneous_xy[0, 0]
         y = homogeneous_xy[1, 0]

@@ -28,7 +28,7 @@ def image_print(img):
 
 def get_slope(pt1,pt2):
     try:
-        return (pt1[1]-pt2[1])/(pt1[0]-pt2[0])
+        return float(pt1[1]-pt2[1])/float(pt1[0]-pt2[0])
     except:
         print("undefined")
         return None
@@ -51,7 +51,7 @@ def get_intersect(a1, a2, b1, b2):
     x, y, z = np.cross(l1, l2)          # point of intersection
     if z == 0:                          # lines are parallel
         return (float('inf'), float('inf'))
-    return (int(x/z), int(y/z))
+    return (int(float(x)/float(z)), int(float(y)/float(z)))
 
 def angle_bisector_equation(p1, p2, q1, q2):
     """
@@ -85,8 +85,8 @@ def angle_bisector_equation(p1, p2, q1, q2):
     
     # new_slope = (A1*math.sqrt(A2**2+B2**2) - A2*math.sqrt(A1**2+B1**2))/(B2*math.sqrt(A1**2+B1**2)-B1*math.sqrt(A2**2+B2**2))
     # new_yintercept = (C1*math.sqrt(A2**2+B2**2) - C2*math.sqrt(A1**2+B1**2))/(B2*math.sqrt(A1**2+B1**2)-B1*math.sqrt(A2**2+B2**2))
-    new_slope = (A1*sqrt2 - A2*sqrt1)/denom
-    new_yintercept = (C1*sqrt2 - C2*sqrt1)/denom
+    new_slope = float(A1*sqrt2 - A2*sqrt1)/float(denom)
+    new_yintercept = float(C1*sqrt2 - C2*sqrt1)/float(denom)
     return new_slope, new_yintercept
 
 def best_lines_bisector_line(fd_linesp, shape):
@@ -110,8 +110,8 @@ def best_lines_bisector_line(fd_linesp, shape):
     print(pos_idx)
     print(neg_idx)
     # Get start and end points of the two lines
-    A,B = (-5000,y_max),(x_max/2,0) #left side
-    C,D = (5000,y_max),(x_max/2,0) #right side
+    A,B = (-5000,y_max),(float(x_max)/float(2,0)) #left side
+    C,D = (5000,y_max),(float(x_max)/float(2,0)) #right side
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
         med_pos = pos_idx[0][-1]
         #med_pos = int(round(np.median(pos_idx)))
@@ -125,12 +125,12 @@ def best_lines_bisector_line(fd_linesp, shape):
 
     m_1 = get_slope(A, B)
     b_1 = A[1]*1.0 - m_1*A[0]*1.0
-    X_1 = (376.0 - b_1*1.0)/(1.0*m_1)
+    X_1 = float(376 - b_1)/float(m_1)
     #rospy.logerr("mbx1{} {} {}".format(m_1, b_1, X_1))
     
     m_2 = get_slope(C, D)
     b_2 = C[1]*1.0 - m_2*C[0]*1.0
-    X_2 = (376 - b_2)/(1.0*m_2)
+    X_2 = float(376 - b_2)/float(m_2)
     
     #rospy.logerr("mbx2 {} {} {}".format(m_2, b_2, X_2))
     return X_1, X_2
@@ -139,7 +139,7 @@ def best_lines_bisector_line(fd_linesp, shape):
     intersection_pt = get_intersect(A, B, C, D)
     slope, y_intercept = angle_bisector_equation(A, B, C, D)
     avg_y = y_max #(B[0] + D[0]) / 2
-    a_x = (avg_y - y_intercept) / slope
+    a_x = float(avg_y - y_intercept) / float(slope)
     end_intersection_pt = (int(a_x),int(avg_y))#(int(avg_y), int(a_x))
 
 
@@ -185,14 +185,14 @@ def polar2cartesian(rho, theta_rad, rotate90 = False):
     y = np.sin(theta_rad) * rho
     m = np.nan
     if not np.isclose(x, 0.0):
-        m = y / x
+        m = float(y) / float(x)
     if rotate90:
         if m is np.nan:
             m = 0.0
         elif np.isclose(m, 0.0):
             m = np.nan
         else:
-            m = -1.0 / m
+            m = -1.0 / float(m)
     b = 0.0
     if m is not np.nan:
         b = y - m * x
@@ -233,7 +233,7 @@ def cd_color_segmentation(img, template, visualize =False):
     hsv_image = masked_img#cv2.cvtColor(img_masked2, cv2.COLOR_RGB2HSV)
     h, s, v = cv2.split(hsv_image)
     ret, th1 = cv2.threshold(h,180,255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    kernel = np.ones((1,1), dtype = "uint8")/9
+    kernel = np.ones((1,1), dtype = "uint8")/float(9)
     bilateral = cv2.bilateralFilter(th1, 9 , 75, 75)
     erosion = cv2.erode(bilateral, kernel, iterations = 1)
 
@@ -257,7 +257,7 @@ def cd_color_segmentation(img, template, visualize =False):
 
     minLineLength = 70
     maxLineGap = 10
-    linesP = cv2.HoughLinesP(dst, 1, np.pi/180, threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
+    linesP = cv2.HoughLinesP(dst, 1, np.pi/float(180), threshold=50, minLineLength=minLineLength, maxLineGap=maxLineGap)
 
     #lines = cv2.HoughLines(dst, 1, np.pi/180, threshold=50)
     #filteredLines = get_strong_hough_lines(lines)
@@ -350,7 +350,7 @@ def transformUvToXy(u, v):
 
         homogeneous_point = np.array([[u], [v], [1]])
         xy = np.dot(h, homogeneous_point)
-        scaling_factor = 1.0 / xy[2, 0]
+        scaling_factor = 1.0 / float(xy[2, 0])
         homogeneous_xy = xy * scaling_factor
         x = homogeneous_xy[0, 0]
         y = homogeneous_xy[1, 0]
