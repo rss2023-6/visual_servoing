@@ -123,17 +123,20 @@ def best_lines_bisector_line(fd_linesp, shape):
         #neg_pos = int(round(np.median(neg_idx)))
         A,B = (sorted_lines[neg_pos][0],sorted_lines[neg_pos][1]),(sorted_lines[neg_pos][2],sorted_lines[neg_pos][3])
 
-    m_1 = get_slope(A, B)
-    b_1 = A[1]*1.0 - m_1*A[0]*1.0
-    X_1 = float(360 - b_1)/float(m_1)
+
+    #Finding X_intersects for PID
+
+    #m_1 = get_slope(A, B)
+    #b_1 = A[1]*1.0 - m_1*A[0]*1.0
+    #X_1 = float(360 - b_1)/float(m_1)
     #rospy.logerr("mbx1{} {} {}".format(m_1, b_1, X_1))
     
-    m_2 = get_slope(C, D)
-    b_2 = C[1]*1.0 - m_2*C[0]*1.0
-    X_2 = float(360 - b_2)/float(m_2)
+    #m_2 = get_slope(C, D)
+    #b_2 = C[1]*1.0 - m_2*C[0]*1.0
+    #X_2 = float(360 - b_2)/float(m_2)
     
     #rospy.logerr("mbx2 {} {} {}".format(m_2, b_2, X_2))
-    return X_1, X_2
+    #return X_1, X_2
 
     # Compute intersection point of the two lines
     intersection_pt = get_intersect(A, B, C, D)
@@ -288,23 +291,31 @@ def cd_color_segmentation(img, template, visualize =False):
     if len(filtered_linesp) == 0:
          filtered_linesp.append([335, 0, 336, 376])
 
-    X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
+    
+    #Uncomment this section for PID
+
+    #X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
     #rospy.logerr("X1{}".format(X_1))
     #rospy.logerr("X2{}".format(X_2))
-    left = transformUvToXy(X_1, 360)
-    right = transformUvToXy(X_2, 360)
+    #left = transformUvToXy(X_1, 360)
+    #right = transformUvToXy(X_2, 360)
 
-    print(left, right)
+    #print(left, right)
+    #a, b = left, right
+
+    #Uncomment this section for pure pursuit
+    intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
+    a, b = intersection_pt, end_intersection_pt
 
 
     #print(g)
     if visualize:
-        cv2.circle(img, (int(X_1), 360), radius=10, color=(225, 0, 255))
-        cv2.circle(img, (int(X_2), 360), radius=10, color=(225, 0, 255))
-        #cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
+        #cv2.circle(img, (int(X_1), 360), radius=10, color=(225, 0, 255))
+        #cv2.circle(img, (int(X_2), 360), radius=10, color=(225, 0, 255))
+        cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
         image_print(img)
 
-    return left, right
+    return a, b
     # except:
     # 	return None
 
