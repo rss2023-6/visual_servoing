@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import pdb
 import math
-#import rospy
+# import rospy
 
 #################### X-Y CONVENTIONS #########################
 # 0,0  X  > > > > >
@@ -89,7 +89,7 @@ def angle_bisector_equation(p1, p2, q1, q2):
     new_yintercept = float(C1*sqrt2 - C2*sqrt1)/float(denom)
     return new_slope, new_yintercept
 
-def best_lines_bisector_line(fd_linesp, shape):
+def best_lines_bisector_line(fd_linesp, shape, img, quadsection =False):
     #rospy.logerr("fd{}".format(fd_linesp))
     x_max,y_max = shape[1],shape[0]
     ####testing
@@ -107,15 +107,11 @@ def best_lines_bisector_line(fd_linesp, shape):
     pos_idx = np.where(angles[sort_ind]> 0.3)#np.argmin(angles) #right
     neg_idx = np.where(angles[sort_ind]< -0.3)#np.argmax(angles) #left
 
-    #print(pos_idx)
-    #print(neg_idx)
+    print(pos_idx)
+    print(neg_idx)
     # Get start and end points of the two lines
-    #A,B = (0,y_max),(float(x_max)/float(2),0) #left side
-    #C,D = (640,y_max),(float(x_max)/float(2),0) #right side
-
-    A, B = 0, 0
-    C, D = 0, 0
-
+    A,B = (0,y_max),(float(x_max)/float(2),0) #left side
+    C,D = (x_max,y_max),(float(x_max)/float(2),0) #right side
     if np.size(pos_idx, axis=None): #if no positive slopes, use right image edge
         med_pos = pos_idx[0][-1]
         #med_pos = int(round(np.median(pos_idx)))
@@ -130,36 +126,49 @@ def best_lines_bisector_line(fd_linesp, shape):
 
     #Finding X_intersects for PID
 
-    X_1, X_2 = 0, 0
-
-    if(A != 0 ):
-        m_1 = get_slope(A, B)
-        b_1 = A[1]*1.0 - m_1*A[0]*1.0
-        X_1 = float(360 - b_1)/float(m_1)
-    
+    #m_1 = get_slope(A, B)
+    #b_1 = A[1]*1.0 - m_1*A[0]*1.0
+    #X_1 = float(360 - b_1)/float(m_1)
     #rospy.logerr("mbx1{} {} {}".format(m_1, b_1, X_1))
-    if(C != 0):
-        m_2 = get_slope(C, D)
-        b_2 = C[1]*1.0 - m_2*C[0]*1.0
-        X_2 = float(360 - b_2)/float(m_2)
+    
+    #m_2 = get_slope(C, D)
+    #b_2 = C[1]*1.0 - m_2*C[0]*1.0
+    #X_2 = float(360 - b_2)/float(m_2)
     
     #rospy.logerr("mbx2 {} {} {}".format(m_2, b_2, X_2))
-    return X_1, X_2
+    #return X_1, X_2
 
     # Compute intersection point of the two lines
-    #intersection_pt = get_intersect(A, B, C, D)
-    #slope, y_intercept = angle_bisector_equation(A, B, C, D)
-    #avg_y = y_max #(B[0] + D[0]) / 2
-    #a_x = float(avg_y - y_intercept) / float(slope)
-    #end_intersection_pt = (int(a_x),int(avg_y))#(int(avg_y), int(a_x))
+    intersection_pt = get_intersect(A, B, C, D)
+    slope, y_intercept = angle_bisector_equation(A, B, C, D)
+    avg_y = y_max #(B[0] + D[0]) / 2
+    a_x = float(avg_y - y_intercept) / float(slope)
+    end_intersection_pt = (int(a_x),int(avg_y))#(int(avg_y), int(a_x))
 
+    if quadsection:
+        print("quad true")
+        quad_intersection_pt = get_intersect(A,B,intersection_pt, end_intersection_pt)
+        print("intersection",intersection_pt, end_intersection_pt)
+        quad_slope, quad_y_intercept = angle_bisector_equation(A, B, intersection_pt, end_intersection_pt )
+        a_quad_x = float((avg_y - quad_y_intercept)) / float(quad_slope)
+        end_quad_intersection_pt = (int(a_quad_x),int(avg_y))
+        print("quadsection results: ",quad_intersection_pt, end_quad_intersection_pt)
 
-    # quad_slope, quad_y_intercept = angle_bisector_equation(A,B,intersection_pt, end_intersection_pt)
-#     a_quad_x = (avg_y - quad_y_intercept) / quad_slope
-#     end_quad_intersection_pt = (int(a_quad_x),int(avg_y))
+        cv2.line(img, intersection_pt, end_intersection_pt, (255,255,255), 3, cv2.LINE_AA)
+        print("intersection SLOPE:", get_slope(intersection_pt, end_intersection_pt))
+        image_print(img)
+        print("A,B:", A, B)
+        print("AB SLOPE:", get_slope(A,B))
+        cv2.line(img, A,(int(B[0]), int(B[1])), (0,0,0), 3, cv2.LINE_AA)
+        image_print(img)
+        cv2.line(img, quad_intersection_pt,end_quad_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
+        image_print(img)
+        print("quad SLOPE:",  quad_slope)
 
+        return quad_intersection_pt, end_quad_intersection_pt
+    
     # print(intersection_pt, end_intersection_pt)
-    #return intersection_pt, end_intersection_pt
+    return intersection_pt, end_intersection_pt
 
 def get_strong_hough_lines(lines):
     lines_arr = np.array(lines)
@@ -212,7 +221,7 @@ def polar2cartesian(rho, theta_rad, rotate90 = False):
         
 
 
-def cd_color_segmentation(img, template, visualize =False):
+def cd_color_segmentation(img, template, quadsection = False, visualize =False):
     """
     Implement the cone detection using color segmentation algorithm
     Input:
@@ -259,7 +268,7 @@ def cd_color_segmentation(img, template, visualize =False):
     for i in range(0, pixel_components):
         if area[i] >= min_size:
             img2[output == i + 1] = 255
-
+ 
     # try:
     ### get hough transform and filter by slope and length 
     src = np.uint8(img2)
@@ -286,8 +295,7 @@ def cd_color_segmentation(img, template, visualize =False):
             if abs(y2 - y1) > 0.2 * abs(x2 - x1) and get_length((x1, y1), (x2, y2)) >= minLineLength:
                filtered_linesp.append([x1, y1, x2, y2])
 
-    #print(filtered_linesp)
-
+    print(filtered_linesp)
 
     if len(filtered_linesp) == 0:
        for line in linesP:
@@ -302,34 +310,24 @@ def cd_color_segmentation(img, template, visualize =False):
     
     #Uncomment this section for PID
 
-    X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
+    #X_1, X_2 = best_lines_bisector_line(filtered_linesp, img.shape)
     #rospy.logerr("X1{}".format(X_1))
     #rospy.logerr("X2{}".format(X_2))
-    left, right = 0, 0 
-    if(X_1 != 0):
-        left = transformUvToXy(X_1, img.shape[0])
-    if(X_2 != 0):
-        right = transformUvToXy(X_2, img.shape[0])
-    if(left == 0):
-        #right should be negative but better to be robust just in case
-        left = (right[0], -1.0 * np.sign(right[1]) * (1.02 - abs(right[1])))
-    if(right == 0):
-        right = (left[0], -1.0 * np.sign(left[1]) * (1.02 - abs(left[1]))) 
+    #left = transformUvToXy(X_1, 360)
+    #right = transformUvToXy(X_2, 360)
 
-    print(left, right)
-    print(left[1] + right[1])
-    a, b = left, right
+    #print(left, right)
+    #a, b = left, right
 
     #Uncomment this section for pure pursuit
-    #intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
-    #a, b = intersection_pt, end_intersection_pt
-
+    intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape,img, quadsection)
+    a, b = intersection_pt, end_intersection_pt
 
     #print(g)
     if visualize:
-        cv2.circle(img, (int(X_1), 360), radius=10, color=(225, 0, 255))
-        cv2.circle(img, (int(X_2), 360), radius=10, color=(225, 0, 255))
-        #cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
+        #cv2.circle(img, (int(X_1), 360), radius=10, color=(225, 0, 255))
+        #cv2.circle(img, (int(X_2), 360), radius=10, color=(225, 0, 255))
+        cv2.line(img, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA)
         image_print(img)
 
     return a, b
@@ -386,6 +384,6 @@ def transformUvToXy(u, v):
 
 
 if __name__ == '__main__':
-    _img = cv2.imread("C:\\Users\\vanwi\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\e1.png")
-    #_img = cv2.imread("../../images/0.34.png")
-    cd_color_segmentation(_img, "", True)
+   _img = cv2.imread("/Users/kristinezheng/racecar_docker/home/racecar_ws/src/final_challenge2023/track_img/v_car/straight_middle.png")
+    # _img = cv2.imread("../../images/0.34.png")
+   cd_color_segmentation(_img, "", True, True)
