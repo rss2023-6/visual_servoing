@@ -10,9 +10,10 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point #geometry_msgs not in CMake file
 from visual_servoing.msg import ConeLocationPixel
 from std_msgs.msg import Float32
+from std_msgs.msg import Float32MultiArray
 
 # import your color segmentation algorithm; call this function in ros_image_callback!
-from computer_vision.color_segmentation import cd_color_segmentation
+from computer_vision.color_segmentation import cd_color_segmentation, transform_image, get_lane_position
 
 
 class ConeDetector():
@@ -27,7 +28,9 @@ class ConeDetector():
 
         # Subscribe to ZED camera RGB frames
         self.cone_pub = rospy.Publisher("/relative_cone_px", ConeLocationPixel, queue_size=10)
-        self.err_pub = rospy.Publisher("/lane_error", Float32, queue_size=10)
+        self.position_pub = rospy.Publisher("/lane_position", Float32MultiArray, queue_size=30)
+        self.err_pub = rospy.Publisher("/lane_error", Float32, queue_size=30)
+
         self.debug_pub = rospy.Publisher("/cone_debug_img", Image, queue_size=30)
         self.image_sub = rospy.Subscriber("/zed/zed_node/rgb/image_rect_color", Image, self.image_callback)
         self.bridge = CvBridge() # Converts between ROS images and OpenCV Images
@@ -47,9 +50,18 @@ class ConeDetector():
         #################################
 
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
-        
+        strong_lines, x_intercept, strong_lines2 = transform_image(image)
 
-        Left, Right = cd_color_segmentation(image,"", False) #((x,y),(x+w,y+h))
+        if(type(strong_lines) != np.ndarray):
+            return
+
+        avg_angle, left, right = get_lane_position(strong_lines, x_intercept)
+        print(avg_angle / np.pi * 180)
+        print(left, right)
+        
+        thresh = 0.8
+        if(abs(right - left - 1.2) > thresh):
+          print("LEFT RIGHT ESTIMATION NOT ACCURATE")
 
         #debug msg
         #image1 = cv2.line(image, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA) #radius = 5
@@ -57,13 +69,12 @@ class ConeDetector():
         #self.debug_pub.publish(debug_msg)
         #rospy.logerr(Left)
         #rospy.logerr("Right{}".format(Right))
-        self.err_pub.publish(Left[1] + Right[1])
-        #if not intersection_pt:
-            #rospy.loginfo("no directions detected")
-        #else:
-        #    d = 159
-        #    avg_pt = (end_intersection_pt[0], d)
-        #    self.cone_pub.publish(avg_pt[0],avg_pt[1])
+
+        # self.err_pub.publish(Left[1] + Right[1])
+
+        float_array_msg = Float32MultiArray()
+        float_array_msg.data = [left, right, avg_angle]
+        self.info_pub.publish(float_array_msg)
 
 
 if __name__ == '__main__':
