@@ -49,24 +49,25 @@ class ConeDetector():
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
         
 
-        #Left, Right = cd_color_segmentation(image,"", False) #((x,y),(x+w,y+h))
-        intersection_pt, end_intersection_pt = cd_color_segmentation(image,"", False) #((x,y),(x+w,y+h))
+        Left, Right = cd_color_segmentation(image,"", False) #((x,y),(x+w,y+h))
+        #intersection_pt, end_intersection_pt = cd_color_segmentation(image,"",False) #((x,y),(x+w,y+h))
 
 
         #debug msg
-        #image1 = cv2.line(image, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA) #radius = 5
+        #image1 = cv2.line(image, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA) #radius = 
+        #img2 = cv2.circle(image, (end_intersection_pt[0],159),5,(255,0,0),-1)
         #debug_msg = self.bridge.cv2_to_imgmsg(image1, "bgr8")
         #self.debug_pub.publish(debug_msg)
         #rospy.logerr(Left)
         #rospy.logerr("Right{}".format(Right))
         
-        #self.err_pub.publish(Left[1] + Right[1])
-        if not intersection_pt:
-            rospy.loginfo("no directions detected")
-        else:
-            d = 159
-            avg_pt = (end_intersection_pt[0], d)
-            self.cone_pub.publish(avg_pt[0],avg_pt[1])
+        self.err_pub.publish(Left[1] + Right[1])
+        #if not intersection_pt:
+            #rospy.loginfo("no directions detected")
+        #else:
+            #d = 159
+            #avg_pt = (end_intersection_pt[0], d)
+            #self.cone_pub.publish(avg_pt[0],avg_pt[1])
 
 
 if __name__ == '__main__':

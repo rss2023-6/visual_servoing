@@ -55,7 +55,7 @@ class PurePursuit(object):
 	#scale = radius / d
         x = msg.x_pos
         y = msg.y_pos 
-        #rospy.logerr("x: {} y: {}".format(x, y))
+        rospy.logerr("x: {} y: {}".format(x, y))
         def cte(x,y): # Currently publishes relative cross track error
             return y
         bfe = lambda y: abs(self.buffer_y - y)
@@ -85,7 +85,7 @@ class PurePursuit(object):
         
 
     def drive_command(self, goalx, goaly):
-        #rospy.logerr("x: {}, y: {}".format(self.x, self.y))
+        rospy.logerr("x: {}, y: {}".format(self.x, self.y))
         #rospy.logerr("goalx: {}, goaly: {}".format(goalx, goaly))
         #ospy.logerr("a")
         
