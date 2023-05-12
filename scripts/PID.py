@@ -11,8 +11,8 @@ class WallFollower:
     # Import ROS parameters from the "params.yaml" file.
     # Access these variables in class functions with self:
     # i.e. self.CONSTANT
-    DRIVE_TOPIC = rospy.get_param("/vesc/ackermann_cmd_mux/input/navigation")
-    ERROR_TOPIC = rospy.get_param("/lane_error")
+    DRIVE_TOPIC = "/vesc/ackermann_cmd_mux/input/navigation"
+    ERROR_TOPIC = "/lane_error"
     history_dist = 0
     history_para = 0
     ierr_para = 0
@@ -33,26 +33,27 @@ class WallFollower:
         solution.drive.speed = solution_speed
         solution.drive.acceleration = 0
         solution.drive.jerk = 0
-        #rospy.loginfo(solution_angle)
-        self.pub.publish(solution)
-
+        rospy.logerr(solution_angle)
+        self.drive_pub.publish(solution)
+        
     
     def compute_drive(self, error):
         # Computes the steering angle and speed of the car
         speed = 4
         p_gain = .4
-        d_gain = .3
+        d_gain = .1
         #rospy.loginfo((error,'distance'))
         derr_dist = error-self.history_dist
         self.history_dist = error
         P = p_gain*error
+        max_angle = 0.17
         D = -d_gain*derr_dist
         steering_angle = P+D
-        if steering_angle > .34:
-            steering_angle = .34
+        if steering_angle > max_angle:
+            steering_angle = max_angle
             
-        elif steering_angle <-.34:
-	        steering_angle = -.34
+        elif steering_angle <-1.0*max_angle:
+	        steering_angle = -1.0*max_angle
         
         return steering_angle, speed
 if __name__ == "__main__":
