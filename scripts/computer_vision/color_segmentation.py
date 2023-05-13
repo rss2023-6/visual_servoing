@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import division
 import cv2
 import numpy as np
 import pdb
@@ -323,6 +324,8 @@ def cd_color_segmentation(img, template, visualize =False):
     #Uncomment this section for pure pursuit
     #intersection_pt, end_intersection_pt = best_lines_bisector_line(filtered_linesp, img.shape)
     #a, b = intersection_pt, end_intersection_pt
+
+    print(left, right)
 
 
     #print(g)
