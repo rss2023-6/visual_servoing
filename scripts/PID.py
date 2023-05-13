@@ -30,7 +30,7 @@ class lane_PID:
         self.last_time = rospy.Time.now()
         self.left = None
         self.right = None
-        self.speed = 4.0
+        self.speed = 1.0
         self.error_total = 0
         self.history_dist = 0
     
