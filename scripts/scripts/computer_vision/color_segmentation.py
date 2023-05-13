@@ -219,13 +219,13 @@ def cd_color_segmentation(img, template, quadsection = False, visualize =False):
     """
     ########## YOUR CODE STARTS HERE ##########
     ### Cut off anything not the floor
-    start_point1 = (0, 0) #top rectangle 
-    end_point1 = (676, 150) #top rectangle: just edit y_coordinate for line_follower
+   # start_point1 = (0, 0) #top rectangle 
+   # end_point1 = (676, 150) #top rectangle: just edit y_coordinate for line_follower
 
-    thickness = -1 
-    color = (0, 0, 0) # Black color in BGR
-    img_line= cv2.rectangle(img, start_point1, end_point1, color, thickness)
-
+   # thickness = -1 
+   # color = (0, 0, 0) # Black color in BGR
+   # img_line= cv2.rectangle(img, start_point1, end_point1, color, thickness)
+    img= img[150:,:,:]
 
     ### change image to HSV and detect white 
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -373,4 +373,4 @@ def transformUvToXy(u, v):
 if __name__ == '__main__':
    _img = cv2.imread("C:\\Users\\vanwi\\OneDrive\\Documents\\MIT\\Senior\\6.4200\\racecar_docker\\home\\racecar_ws\\src\\final_challenge2023\\track_img\\c2.png")
     # _img = cv2.imread("../../images/0.34.png")
-   cd_color_segmentation(_img, "", True, False)
+   cd_color_segmentation(_img, "", True, True)
