@@ -13,7 +13,7 @@ from std_msgs.msg import Float32
 from std_msgs.msg import Float32MultiArray
 
 # import your color segmentation algorithm; call this function in ros_image_callback!
-from computer_vision.color_segmentation import cd_color_segmentation, transform_image, get_lane_position
+from computer_vision.color_segmentation import transform_image, get_lane_position
 
 
 class ConeDetector():
@@ -48,7 +48,6 @@ class ConeDetector():
         # pixel location in the image.
         # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
         #################################
-
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
         strong_lines, x_intercept, strong_lines2 = transform_image(image)
 
@@ -56,12 +55,12 @@ class ConeDetector():
             return
 
         avg_angle, left, right = get_lane_position(strong_lines, x_intercept)
-        print(avg_angle / np.pi * 180)
-        print(left, right)
+        # print(avg_angle / np.pi * 180)
+        # print(left, right)
         
         thresh = 0.8
-        if(abs(right - left - 1.2) > thresh):
-          print("LEFT RIGHT ESTIMATION NOT ACCURATE")
+        # if(abs(right - left - 1.2) > thresh):
+        #   print("LEFT RIGHT ESTIMATION NOT ACCURATE")
 
         #debug msg
         #image1 = cv2.line(image, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA) #radius = 5
@@ -74,7 +73,7 @@ class ConeDetector():
 
         float_array_msg = Float32MultiArray()
         float_array_msg.data = [left, right, avg_angle]
-        self.info_pub.publish(float_array_msg)
+        self.position_pub.publish(float_array_msg)
 
 
 if __name__ == '__main__':

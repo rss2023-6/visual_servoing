@@ -59,14 +59,14 @@ def transform_image(img):
 
     img = cv2.warpPerspective(img, homography_matrix(), (WIDTH, HEIGHT))
 
-    plt.figure()
-    plt.imshow(img)
+    # plt.figure()
+    # plt.imshow(img)
 
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)[1]
 
-    plt.figure()
-    plt.imshow(thresh)
+    # plt.figure()
+    # plt.imshow(thresh)
 
     linesP = cv2.HoughLinesP(thresh, rho=1, theta=np.pi/180, threshold=50, minLineLength=150, maxLineGap=10)
     # print(linesP)
@@ -145,8 +145,8 @@ def get_lane_position(strong_lines, x_intercepts):
       N = len(intercepts)
       if(intercepts[N-1] < 0):
         left = intercepts[N-1]
-        right = intercepts[N-1] + 1.2
+        right = intercepts[N-1] + 0.83
       else:
         right = intercepts[0]
-        left = right - 1.2
+        left = right - 0.83
   return avg_angle, left, right

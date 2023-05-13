@@ -19,58 +19,67 @@ class lane_PID:
         # subscribers here
 
         #might need to make these values all negative if I fucked up on signs / left right
-        self.p_gain = .4
+        #self.p_gain = -0.15 2
+        self.p_gain = -0.1
         self.max_angle = 0.34
-        self.d_gain = .1
-        self.p_gain_angle = 0.2
+        self.d_gain = -0.01
+        #self.p_gain_angle = -0.35 2
+        self.p_gain_angle = -0.3
 
         self.drive_pub = rospy.Publisher(self.DRIVE_TOPIC, AckermannDriveStamped, queue_size=10)  
-        self.error_sub = rospy.Subscriber(self.ERROR_TOPIC, Float32, self.error_cb) 
+        # self.error_sub = rospy.Subscriber(self.ERROR_TOPIC, Float32, self.error_cb) 
         self.pos_sub = rospy.Subscriber("/lane_position", Float32MultiArray, self.lane_pos_callback)
-        self.last_time = rospy.Time.now()
+        self.last_time = rospy.Time.now().to_sec()
         self.left = None
         self.right = None
-        self.speed = 1.0
+        self.speed = 4.0
         self.error_total = 0
         self.history_dist = 0
+        rospy.logerr("PID starting")
     
     def lane_pos_callback(self, msg):
-        self.left = msg.data[0]
-        self.right = msg.data[1]
+        self.left = -1.0 * msg.data[1]
+        self.right = -1.0 * msg.data[0]
+        self.angle = -1.0 * msg.data[2]
 
-        solution_angle, solution_speed = self.compute_drive2(self.left, self.right)
-        solution = AckermannDriveStamped()
-        solution.header.stamp = rospy.get_rostime()
-        solution.drive.steering_angle = solution_angle
-        solution.drive.steering_angle_velocity = 0
-        solution.drive.speed = solution_speed
-        solution.drive.acceleration = 0
-        solution.drive.jerk = 0
-        rospy.logerr(solution_angle)
-        self.drive_pub.publish(solution)
+        solution_angle, solution_speed = self.compute_drive_w_angle(self.left, self.right, self.angle)
+
+        solution_drive = AckermannDriveStamped()
+        
+        solution_drive.header.stamp = rospy.get_rostime()
+        solution_drive.drive.steering_angle = solution_angle
+        solution_drive.drive.steering_angle_velocity = 0
+        solution_drive.drive.speed = 4.0
+        solution_drive.drive.acceleration = 0
+        solution_drive.drive.jerk = 0
+        
+        # rospy.logerr("publishing solution!")
+        self.drive_pub.publish(solution_drive)
 
 
     def compute_drive_w_angle(self, left, right, angle):
-        print("CAR ANGLE (degrees)", angle / np.pi * 180)
+        # print("CAR ANGLE (degrees)", angle / np.pi * 180)
 
-        dT = rospy.Time.now() - self.last_time
-        self.last_time = rospy.Time.now()
+        dT = rospy.Time.now().to_sec() - self.last_time
+        self.last_time = rospy.Time.now().to_sec()
 
         error = left + right
         angle_error = angle
 
         derr_dist = (error - self.history_dist) / (dT * 1.0)
+        # print(derr_dist)
         self.history_dist = error
         self.error_total += error
 
-        P = -1.0 * self.p_gain*error
-        D = -1.0 * self.d_gain*derr_dist
-        Pangle = -1.0 * self.p_gain_angle*angle_error
-        steering_angle = P+D +Pangle
+        P = self.p_gain*error
+        D = self.d_gain*derr_dist
+        Pangle = self.p_gain_angle*angle_error
 
         solution_angle = np.clip(P + D + Pangle, -1.0 * self.max_angle, 1.0 * self.max_angle)
         solution_speed = self.speed
-        print('steerig (degrees)', solution_angle / np.pi * 180)
+        
+        # print('steerig (degrees)', solution_angle / np.pi * 180)
+        
         return solution_angle, solution_speed
          
     

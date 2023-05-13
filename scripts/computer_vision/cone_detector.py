@@ -23,8 +23,6 @@ class ConeDetector():
     """
     def __init__(self):
         # toggle line follower vs cone parker
-        self.LineFollower = False
-
         # Subscribe to ZED camera RGB frames
         self.cone_pub = rospy.Publisher("/relative_cone_px", ConeLocationPixel, queue_size=10)
         self.pos_pub = rospy.Publisher("/lane_position", Float32MultiArray, queue_size=30)
@@ -47,21 +45,16 @@ class ConeDetector():
         # pixel location in the image.
         # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
         #################################
-
+        rospy.logerr("image_msg!!")
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
         strong_lines, x_intercept, strong_lines2 = transform_image(image)
 
         if(type(strong_lines) != np.ndarray):
+            rospy.logerr("got no lines!! :(")
             return
 
         avg_angle, left, right = get_lane_position(strong_lines, x_intercept)
-        print(avg_angle / np.pi * 180)
-        print(left, right)
-        
         thresh = 0.8
-        if(abs(right - left - 1.2) > thresh):
-          print("LEFT RIGHT ESTIMATION NOT ACCURATE")
-
         #debug msg
         #image1 = cv2.line(image, intersection_pt, end_intersection_pt, (0,200,255), 3, cv2.LINE_AA) #radius = 
         #img2 = cv2.circle(image, (end_intersection_pt[0],159),5,(255,0,0),-1)
