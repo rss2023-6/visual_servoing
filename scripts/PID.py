@@ -25,20 +25,21 @@ class lane_PID:
         self.p_gain_angle = 0.2
 
         self.drive_pub = rospy.Publisher(self.DRIVE_TOPIC, AckermannDriveStamped, queue_size=10)  
-        self.error_sub = rospy.Subscriber(self.ERROR_TOPIC, Float32, self.error_cb) 
+        #self.error_sub = rospy.Subscriber(self.ERROR_TOPIC, Float32, self.error_cb) 
         self.pos_sub = rospy.Subscriber("/lane_position", Float32MultiArray, self.lane_pos_callback)
         self.last_time = rospy.Time.now()
         self.left = None
         self.right = None
-        self.speed = 4.0
+        self.speed = 1.0
         self.error_total = 0
         self.history_dist = 0
     
     def lane_pos_callback(self, msg):
         self.left = msg.data[0]
         self.right = msg.data[1]
+        self.angle = msg.data[2]
 
-        solution_angle, solution_speed = self.compute_drive2(self.left, self.right)
+        solution_angle, solution_speed = self.compute_drive_w_angle(self.left, self.right, self.angle)
         solution = AckermannDriveStamped()
         solution.header.stamp = rospy.get_rostime()
         solution.drive.steering_angle = solution_angle
@@ -59,7 +60,7 @@ class lane_PID:
         error = left + right
         angle_error = angle
 
-        derr_dist = (error - self.history_dist) / (dT * 1.0)
+        derr_dist = (error - self.history_dist) / float(dT.to_nsec() * 1.0)
         self.history_dist = error
         self.error_total += error
 
@@ -68,7 +69,7 @@ class lane_PID:
         Pangle = -1.0 * self.p_gain_angle*angle_error
         steering_angle = P+D +Pangle
 
-        solution_angle = np.clip(P + D + Pangle, -1.0 * self.max_angle, 1.0 * self.max_angle)
+        solution_angle = np.clip(steering_angle, -1.0 * self.max_angle, 1.0 * self.max_angle)
         solution_speed = self.speed
         print('steerig (degrees)', solution_angle / np.pi * 180)
         return solution_angle, solution_speed

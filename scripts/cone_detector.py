@@ -13,7 +13,7 @@ from std_msgs.msg import Float32
 from std_msgs.msg import Float32MultiArray
 
 # import your color segmentation algorithm; call this function in ros_image_callback!
-from computer_vision.color_segmentation import cd_color_segmentation, transform_image, get_lane_position
+from computer_vision.color_segmentation_new import transform_image, get_lane_position
 
 
 class ConeDetector():
@@ -28,7 +28,7 @@ class ConeDetector():
 
         # Subscribe to ZED camera RGB frames
         self.cone_pub = rospy.Publisher("/relative_cone_px", ConeLocationPixel, queue_size=10)
-        self.position_pub = rospy.Publisher("/lane_position", Float32MultiArray, queue_size=30)
+        self.pos_pub = rospy.Publisher("/lane_position", Float32MultiArray, queue_size=30)
         self.err_pub = rospy.Publisher("/lane_error", Float32, queue_size=30)
 
         self.debug_pub = rospy.Publisher("/cone_debug_img", Image, queue_size=30)
@@ -75,7 +75,7 @@ class ConeDetector():
 
         float_array_msg = Float32MultiArray()
         float_array_msg.data = [left, right, avg_angle]
-        self.info_pub.publish(float_array_msg)
+        self.pos_pub.publish(float_array_msg)
 
 
 if __name__ == '__main__':
