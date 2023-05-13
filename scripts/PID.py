@@ -22,7 +22,7 @@ class lane_PID:
         #self.p_gain = -0.15 2
         self.p_gain = -0.1
         self.max_angle = 0.34
-        self.d_gain = -0.01
+        self.d_gain = -0.0 #-0.015
         #self.p_gain_angle = -0.35 2
         self.p_gain_angle = -0.3
 
@@ -32,7 +32,7 @@ class lane_PID:
         self.last_time = rospy.Time.now().to_sec()
         self.left = None
         self.right = None
-        self.speed = 4.0
+        self.speed = 3.0
         self.error_total = 0
         self.history_dist = 0
         rospy.logerr("PID starting")
@@ -49,7 +49,7 @@ class lane_PID:
         solution_drive.header.stamp = rospy.get_rostime()
         solution_drive.drive.steering_angle = solution_angle
         solution_drive.drive.steering_angle_velocity = 0
-        solution_drive.drive.speed = 4.0
+        solution_drive.drive.speed = 3.0
         solution_drive.drive.acceleration = 0
         solution_drive.drive.jerk = 0
         

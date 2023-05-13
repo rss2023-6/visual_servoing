@@ -145,8 +145,8 @@ def get_lane_position(strong_lines, x_intercepts):
       N = len(intercepts)
       if(intercepts[N-1] < 0):
         left = intercepts[N-1]
-        right = intercepts[N-1] + 0.83
+        right = intercepts[N-1] + 1.0
       else:
         right = intercepts[0]
-        left = right - 0.83
+        left = right - 1.0
   return avg_angle, left, right
